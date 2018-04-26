@@ -20,21 +20,26 @@ jobs:
       - run: sudo apt-get update
       - run: sudo apt-get install libzip-dev libwebp-dev libjpeg-dev libpng-dev libz-dev libxpm-dev libmcrypt-dev
 
-      - run: sudo apt-get update
-      - run: sudo apt-get install -y zlib1g-dev libicu-dev g++
-      - run: sudo docker-php-ext-configure intl
-      - run: sudo docker-php-ext-install intl
-      - run: sudo docker-php-ext-configure bcmath
-      - run: sudo docker-php-ext-install bcmath
-      - run: sudo docker-php-ext-configure pgsql
-      - run: sudo docker-php-ext-install pgsql
-
       - run: sudo pecl install redis
       - run: sudo pecl channel-update pecl.php.net
       - run: sudo pecl install zip && sudo docker-php-ext-enable zip
       - run: sudo docker-php-ext-enable xdebug
       - run: sudo docker-php-ext-install gd
-      - run: sudo docker-php-ext-install pdo_mysql
+
+      - run:
+        name: Install Docker Compose
+        command: |
+          curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+          chmod +x ~/docker-compose
+          sudo mv ~/docker-compose /usr/local/bin/docker-compose
+
+      - run:
+        name: Start container and verify it's working
+        command: |
+          set -x
+          docker-compose up -d
+
+      - setup_remote_docker
 
       # custom commands
       - checkout
