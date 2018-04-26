@@ -1,0 +1,38 @@
+# PHP CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-php/ for more details
+#
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/php:7.1.8-browsers
+      - image: postgres:9.5-alpine
+      - image: redis:4-alpine
+        env:
+          - POSTGRES_USER=root
+          - POSTGRES_PASSWORD=root
+          - POSTGRES_DB=shopsys
+    working_directory: ~/repo
+
+    steps:
+      # install PHP requires
+      - run: sudo apt-get update
+      - run: sudo apt-get install libzip-dev libwebp-dev libjpeg-dev libpng-dev libz-dev libxpm-dev libmcrypt-dev
+      - run: sudo pecl channel-update pecl.php.net
+      - run: sudo pecl install zip && sudo docker-php-ext-enable zip
+      - run: sudo docker-php-ext-enable xdebug
+      - run: sudo docker-php-ext-install gd
+      - run: sudo docker-php-ext-install pdo_mysql
+
+      # custom commands
+      - checkout
+      - run: cp .circleci/parameters.yml app/config/
+      - restore_cache:
+          key: composer-cache-{{ checksum "composer.json" }}
+      - run: composer install -n
+      - save_cache:
+          key: composer-cache-{{ checksum "composer.json" }}
+          paths:
+            - vendor
+      - run: php phing build-demo-dev
